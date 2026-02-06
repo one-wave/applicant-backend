@@ -123,7 +123,6 @@ class JobSearchService(
 
     private inline fun <reified T> getExcludedLabels(capability: EnvCondition): List<String>?
         where T : Enum<T>, T : EnvCondition {
-        if (capability.level == 0) return null
         return enumValues<T>()
             .filter { it.level > capability.level }
             .map { it.label }

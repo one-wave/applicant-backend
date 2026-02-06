@@ -45,7 +45,7 @@ class MatchScoreCalculator {
 
     private fun fieldScore(userCap: EnvCondition, jobReq: EnvCondition): Int = when {
         jobReq.level == 0 -> MatchDetails.ENV_PER_FIELD
-        userCap.level == 0 -> MatchDetails.ENV_PER_FIELD
+        userCap.level == 0 -> 0
         userCap.level >= jobReq.level -> MatchDetails.ENV_PER_FIELD
         else -> 0
     }
