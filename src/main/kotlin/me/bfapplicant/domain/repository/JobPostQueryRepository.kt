@@ -30,14 +30,17 @@ class JobPostQueryRepository(private val queryFactory: JPAQueryFactory) {
     ): Page<JobPost> {
         val where = buildConditions(filter, envExcludes, educExcludes, careerMonths)
 
-        val content = queryFactory
+        val query = queryFactory
             .selectFrom(jobPost)
             .join(jobPost.company, company).fetchJoin()
             .where(where)
-            .offset(pageable.offset)
-            .limit(pageable.pageSize.toLong())
             .orderBy(sortOrder(filter.sortBy))
-            .fetch()
+
+        if (pageable.isPaged) {
+            query.offset(pageable.offset).limit(pageable.pageSize.toLong())
+        }
+
+        val content = query.fetch()
 
         val total = queryFactory
             .select(jobPost.count())
