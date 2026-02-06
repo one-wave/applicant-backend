@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.springdoc.core.annotations.ParameterObject
 import me.bfapplicant.domain.enums.SortType
 import me.bfapplicant.feature.jobSearch.dto.JobMatchResult
 import me.bfapplicant.feature.jobSearch.dto.JobPostResponse
@@ -67,7 +68,7 @@ class JobSearchController(private val jobSearchService: JobSearchService) {
         @Parameter(description = "정렬 기준 — RECENT: 최신순, SALARY_HIGH: 급여높은순, MATCH_SCORE: 매칭점수순(userId 필수)")
         @RequestParam(required = false, defaultValue = "RECENT") sortBy: SortType,
 
-        @Parameter(hidden = true)
+        @ParameterObject
         @PageableDefault(size = 20) pageable: Pageable
     ): Page<JobPostResponse> {
         val filter = buildFilter(userId, empTypes, salaryTypes, minSalary, maxSalary, region, keyword, sortBy)
@@ -115,7 +116,7 @@ class JobSearchController(private val jobSearchService: JobSearchService) {
         @Parameter(description = "채용공고명 키워드 (대소문자 무시)")
         @RequestParam(required = false) keyword: String?,
 
-        @Parameter(hidden = true)
+        @ParameterObject
         @PageableDefault(size = 20) pageable: Pageable
     ): Page<JobMatchResult> {
         val filter = buildFilter(userId, empTypes, salaryTypes, minSalary, maxSalary, region, keyword, SortType.MATCH_SCORE)
