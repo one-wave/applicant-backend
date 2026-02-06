@@ -9,17 +9,17 @@ import com.google.cloud.storage.StorageOptions
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import java.io.FileInputStream
+import org.springframework.core.io.Resource
 
 @Configuration
 class GcpConfig(
-    @Value("\${gcp.credentials.path}") private val credentialsPath: String,
+    @Value("\${gcp.credentials.path}") private val credentialsResource: Resource,
     @Value("\${gcp.project-id}") private val projectId: String
 ) {
 
     @Bean
     fun gcpCredentials(): GoogleCredentials =
-        FileInputStream(credentialsPath).use { GoogleCredentials.fromStream(it) }
+        credentialsResource.inputStream.use { GoogleCredentials.fromStream(it) }
 
     @Bean
     fun speechClient(credentials: GoogleCredentials): SpeechClient {
