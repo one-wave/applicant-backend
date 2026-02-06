@@ -35,14 +35,21 @@ class ResumeService(
             IllegalArgumentException("User not found")
         }
 
-        if (req.isRepresentative) {
-            resumeRepository.clearRepresentative(userId)
+        val isFirst = resumeRepository.countByUserUserId(userId) == 0L
+        val representative = if (isFirst) {
+            true
+        } else {
+            if (req.isRepresentative) {
+                val existing = resumeRepository.findByUserUserIdAndIsRepresentativeTrue(userId)
+                require(existing == null) { "Representative resume already exists. Use the swap representative API." }
+            }
+            req.isRepresentative
         }
 
         val resume = ApplicantUserResume(
             user = user,
             resumeTitle = req.resumeTitle,
-            isRepresentative = req.isRepresentative
+            isRepresentative = representative
         )
 
         populateChildren(resume, req)
@@ -53,12 +60,11 @@ class ResumeService(
     fun updateResume(userId: UUID, resumeId: UUID, req: ResumeRequest): ResumeResponse {
         val resume = getOwnedResume(userId, resumeId)
 
-        if (req.isRepresentative && !resume.isRepresentative) {
-            resumeRepository.clearRepresentative(userId)
+        if (req.isRepresentative != resume.isRepresentative) {
+            throw IllegalArgumentException("Cannot change representative status via update. Use the swap representative API.")
         }
 
         resume.resumeTitle = req.resumeTitle
-        resume.isRepresentative = req.isRepresentative
         resume.updatedAt = LocalDateTime.now()
 
         resume.educations.clear()
@@ -74,6 +80,11 @@ class ResumeService(
     @Transactional
     fun deleteResume(userId: UUID, resumeId: UUID) {
         val resume = getOwnedResume(userId, resumeId)
+
+        if (resume.isRepresentative && resumeRepository.countByUserUserId(userId) > 1) {
+            throw IllegalArgumentException("Cannot delete representative resume. Swap representative to another resume first.")
+        }
+
         resumeRepository.delete(resume)
     }
 

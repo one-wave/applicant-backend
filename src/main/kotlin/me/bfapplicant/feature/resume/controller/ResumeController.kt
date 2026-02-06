@@ -66,11 +66,12 @@ class ResumeController(private val resumeService: ResumeService) {
     ) = resumeService.deleteResume(userId, resumeId)
 
     @Operation(
-        summary = "대표이력서 지정",
-        description = "해당 이력서를 대표이력서로 지정합니다. 기존 대표이력서는 자동 해제됩니다."
+        summary = "대표이력서 교체",
+        description = "해당 이력서를 새로운 대표이력서로 교체합니다. 기존 대표이력서는 자동 해제됩니다. " +
+            "이력서 생성/수정 시 대표이력서 상태를 직접 변경할 수 없으며, 반드시 이 API를 통해 교체해야 합니다."
     )
     @PatchMapping("/{resumeId}/representative")
-    fun setRepresentative(
+    fun swapRepresentative(
         @AuthenticationPrincipal userId: UUID,
         @PathVariable resumeId: UUID
     ): ResumeResponse = resumeService.setRepresentative(userId, resumeId)

@@ -12,6 +12,8 @@ interface ApplicantUserResumeRepository : JpaRepository<ApplicantUserResume, UUI
 
     fun findByUserUserIdAndIsRepresentativeTrue(userId: UUID): ApplicantUserResume?
 
+    fun countByUserUserId(userId: UUID): Long
+
     @Modifying
     @Query("UPDATE ApplicantUserResume r SET r.isRepresentative = false WHERE r.user.userId = :userId AND r.isRepresentative = true")
     fun clearRepresentative(userId: UUID): Int
