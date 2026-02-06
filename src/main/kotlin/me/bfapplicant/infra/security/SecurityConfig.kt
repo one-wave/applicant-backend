@@ -42,6 +42,7 @@ class SecurityConfig(private val jwtAuthenticationFilter: JwtAuthenticationFilte
                 authorize("/v3/api-docs/**", permitAll)
                 authorize("/api/auth/**", permitAll)
                 authorize("/api/job-posts", permitAll)
+                authorize("/api/tts/guides/**", permitAll)
                 authorize("/api/**", authenticated)
                 authorize(anyRequest, permitAll)
             }

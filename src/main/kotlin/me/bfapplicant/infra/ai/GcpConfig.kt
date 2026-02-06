@@ -6,6 +6,8 @@ import com.google.cloud.speech.v2.SpeechClient
 import com.google.cloud.speech.v2.SpeechSettings
 import com.google.cloud.storage.Storage
 import com.google.cloud.storage.StorageOptions
+import com.google.cloud.texttospeech.v1.TextToSpeechClient
+import com.google.cloud.texttospeech.v1.TextToSpeechSettings
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -30,6 +32,14 @@ class GcpConfig(
             .build()
         return SpeechClient.create(settings)
     }
+
+    @Bean
+    fun textToSpeechClient(credentials: GoogleCredentials): TextToSpeechClient =
+        TextToSpeechClient.create(
+            TextToSpeechSettings.newBuilder()
+                .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
+                .build()
+        )
 
     @Bean
     fun gcpStorage(credentials: GoogleCredentials): Storage =
