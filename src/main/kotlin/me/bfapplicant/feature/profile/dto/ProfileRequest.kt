@@ -1,29 +1,11 @@
-package me.bfapplicant.feature.auth.dto
+package me.bfapplicant.feature.profile.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
-import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.Size
 import java.time.LocalDate
 
-@Schema(description = "회원가입 요청")
-data class SignupRequest(
-    @field:NotBlank
-    @Schema(description = "성", example = "홍")
-    val lastName: String,
-
-    @field:NotBlank
-    @Schema(description = "이름", example = "길동")
-    val firstName: String,
-
-    @field:NotBlank @field:Email
-    @Schema(description = "이메일", example = "hong@example.com")
-    val email: String,
-
-    @field:NotBlank @field:Size(min = 8)
-    @Schema(description = "비밀번호 (8자 이상)", example = "password123")
-    val password: String,
-
+@Schema(description = "프로필 수정 요청")
+data class ProfileRequest(
     @Schema(description = "전화번호", example = "010-1234-5678", nullable = true)
     val userPhone: String? = null,
 

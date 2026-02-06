@@ -25,26 +25,26 @@ class ApplicantUserInfo(
     val user: ApplicantUser,
 
     @Column(name = "user_phone")
-    val userPhone: String? = null,
+    var userPhone: String? = null,
 
     @Column(name = "birth_date")
-    val birthDate: LocalDate? = null,
+    var birthDate: LocalDate? = null,
 
     @Column(name = "env_both_hands", nullable = false)
-    val envBothHands: String,
+    var envBothHands: String,
 
     @Column(name = "env_eye_sight", nullable = false)
-    val envEyeSight: String,
+    var envEyeSight: String,
 
     @Column(name = "env_hand_work", nullable = false)
-    val envHandWork: String,
+    var envHandWork: String,
 
     @Column(name = "env_lift_power", nullable = false)
-    val envLiftPower: String,
+    var envLiftPower: String,
 
     @Column(name = "env_lstn_talk", nullable = false)
-    val envLstnTalk: String,
+    var envLstnTalk: String,
 
     @Column(name = "env_stnd_walk", nullable = false)
-    val envStndWalk: String
+    var envStndWalk: String
 )

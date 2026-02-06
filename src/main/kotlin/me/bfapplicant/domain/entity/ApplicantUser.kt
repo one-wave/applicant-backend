@@ -16,12 +16,15 @@ class ApplicantUser(
     @Column(name = "user_id")
     val userId: UUID? = null,
 
-    @Column(name = "user_name", nullable = false)
-    val userName: String,
+    @Column(name = "last_name", nullable = false)
+    val lastName: String,
+
+    @Column(name = "first_name", nullable = false)
+    val firstName: String,
 
     @Column(name = "user_email_contact", nullable = false)
     val userEmailContact: String,
 
     @Column(name = "password", nullable = false)
-    val password: String
+    var password: String
 )

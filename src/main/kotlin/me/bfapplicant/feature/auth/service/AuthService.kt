@@ -1,7 +1,9 @@
 package me.bfapplicant.feature.auth.service
 
 import me.bfapplicant.domain.entity.ApplicantUser
+import me.bfapplicant.domain.entity.ApplicantUserInfo
 import me.bfapplicant.domain.entity.RefreshToken
+import me.bfapplicant.domain.repository.ApplicantUserInfoRepository
 import me.bfapplicant.domain.repository.ApplicantUserRepository
 import me.bfapplicant.domain.repository.RefreshTokenRepository
 import me.bfapplicant.feature.auth.dto.LoginRequest
@@ -19,6 +21,7 @@ import java.util.UUID
 @Service
 class AuthService(
     private val userRepository: ApplicantUserRepository,
+    private val userInfoRepository: ApplicantUserInfoRepository,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val jwtTokenProvider: JwtTokenProvider,
     private val jwtProperties: JwtProperties,
@@ -32,13 +35,27 @@ class AuthService(
         }
         val user = userRepository.save(
             ApplicantUser(
-                userName = req.userName,
+                lastName = req.lastName,
+                firstName = req.firstName,
                 userEmailContact = req.email,
                 password = passwordEncoder.encode(req.password)!!
             )
         )
+        userInfoRepository.save(buildUserInfo(user, req))
         return issueTokenPair(user)
     }
+
+    private fun buildUserInfo(user: ApplicantUser, req: SignupRequest) = ApplicantUserInfo(
+        user = user,
+        userPhone = req.userPhone,
+        birthDate = req.birthDate,
+        envBothHands = req.envBothHands,
+        envEyeSight = req.envEyeSight,
+        envHandWork = req.envHandWork,
+        envLiftPower = req.envLiftPower,
+        envLstnTalk = req.envLstnTalk,
+        envStndWalk = req.envStndWalk
+    )
 
     @Transactional
     fun login(req: LoginRequest): TokenResponse {
