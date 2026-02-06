@@ -51,6 +51,19 @@ class JobPostQueryRepository(private val queryFactory: JPAQueryFactory) {
         return PageImpl(content, pageable, total)
     }
 
+    fun searchAll(
+        filter: JobSearchFilter,
+        envExcludes: EnvExcludes,
+        educExcludes: List<String>?,
+        careerMonths: Int?
+    ): List<JobPost> =
+        queryFactory
+            .selectFrom(jobPost)
+            .join(jobPost.company, company).fetchJoin()
+            .where(buildConditions(filter, envExcludes, educExcludes, careerMonths))
+            .orderBy(sortOrder(filter.sortBy))
+            .fetch()
+
     private fun buildConditions(
         filter: JobSearchFilter,
         envExcludes: EnvExcludes,

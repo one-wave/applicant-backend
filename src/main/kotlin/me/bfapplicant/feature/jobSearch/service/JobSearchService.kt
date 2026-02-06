@@ -25,10 +25,37 @@ class JobSearchService(
     private val matchScoreCalculator: MatchScoreCalculator
 ) {
 
-    fun search(filter: JobSearchFilter, pageable: Pageable): Page<JobPostResponse> {
+    fun search(filter: JobSearchFilter, pageable: Pageable?): Any {
         val userInfo = resolveUserInfo(filter)
         val resume = resolveRepresentativeResume(filter)
 
+        if (pageable != null) {
+            return searchPaged(filter, userInfo, resume, pageable)
+        }
+
+        if (userInfo == null && hasNoFilter(filter)) {
+            return jobPostRepository.findAllWithCompany().map(JobPostResponse::from)
+        }
+
+        val envExcludes = buildEnvExcludes(userInfo)
+        val educExcludes = buildEducExcludes(resume)
+        val careerMonths = resolveCareerMonths(resume)
+
+        if (filter.sortBy == SortType.MATCH_SCORE) {
+            return searchWithMatchScoreList(filter, envExcludes, educExcludes, careerMonths, userInfo, resume)
+        }
+
+        return jobPostQueryRepository
+            .searchAll(filter, envExcludes, educExcludes, careerMonths)
+            .map(JobPostResponse::from)
+    }
+
+    private fun searchPaged(
+        filter: JobSearchFilter,
+        userInfo: ApplicantUserInfo?,
+        resume: ApplicantUserResume?,
+        pageable: Pageable
+    ): Page<JobPostResponse> {
         if (userInfo == null && hasNoFilter(filter)) {
             return jobPostRepository.findAllBy(pageable).map(JobPostResponse::from)
         }
@@ -38,7 +65,13 @@ class JobSearchService(
         val careerMonths = resolveCareerMonths(resume)
 
         if (filter.sortBy == SortType.MATCH_SCORE) {
-            return searchWithMatchScore(filter, envExcludes, educExcludes, careerMonths, userInfo, resume, pageable)
+            val all = jobPostQueryRepository.searchAll(filter, envExcludes, educExcludes, careerMonths)
+                .map { it to matchScoreCalculator.calculate(it, userInfo, resume, filter).total }
+                .sortedByDescending { it.second }
+                .map { JobPostResponse.from(it.first) }
+            val start = pageable.offset.toInt().coerceAtMost(all.size)
+            val end = (start + pageable.pageSize).coerceAtMost(all.size)
+            return PageImpl(all.subList(start, end), pageable, all.size.toLong())
         }
 
         return jobPostQueryRepository
@@ -71,28 +104,18 @@ class JobSearchService(
         return PageImpl(scored.subList(start, end), pageable, scored.size.toLong())
     }
 
-    private fun searchWithMatchScore(
+    private fun searchWithMatchScoreList(
         filter: JobSearchFilter,
         envExcludes: EnvExcludes,
         educExcludes: List<String>?,
         careerMonths: Int?,
         userInfo: ApplicantUserInfo?,
-        resume: ApplicantUserResume?,
-        pageable: Pageable
-    ): Page<JobPostResponse> {
-        val allMatching = jobPostQueryRepository.search(
-            filter, envExcludes, educExcludes, careerMonths, Pageable.unpaged()
-        ).content
-
-        val sorted = allMatching
+        resume: ApplicantUserResume?
+    ): List<JobPostResponse> =
+        jobPostQueryRepository.searchAll(filter, envExcludes, educExcludes, careerMonths)
             .map { it to matchScoreCalculator.calculate(it, userInfo, resume, filter).total }
             .sortedByDescending { it.second }
             .map { JobPostResponse.from(it.first) }
-
-        val start = pageable.offset.toInt().coerceAtMost(sorted.size)
-        val end = (start + pageable.pageSize).coerceAtMost(sorted.size)
-        return PageImpl(sorted.subList(start, end), pageable, sorted.size.toLong())
-    }
 
     private fun resolveUserInfo(filter: JobSearchFilter): ApplicantUserInfo? =
         filter.userId?.let { applicantUserInfoRepository.findByUserUserId(it) }

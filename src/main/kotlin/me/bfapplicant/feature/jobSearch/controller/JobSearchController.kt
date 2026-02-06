@@ -6,15 +6,13 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
-import org.springdoc.core.annotations.ParameterObject
 import me.bfapplicant.domain.enums.SortType
 import me.bfapplicant.feature.jobSearch.dto.JobMatchResult
 import me.bfapplicant.feature.jobSearch.dto.JobPostResponse
 import me.bfapplicant.feature.jobSearch.dto.JobSearchFilter
 import me.bfapplicant.feature.jobSearch.service.JobSearchService
 import org.springframework.data.domain.Page
-import org.springframework.data.domain.Pageable
-import org.springframework.data.web.PageableDefault
+import org.springframework.data.domain.PageRequest
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -36,9 +34,13 @@ class JobSearchController(private val jobSearchService: JobSearchService) {
             - **userId 전달**: 해당 사용자의 신체 환경 조건에 **부적합한 공고를 자동 제외**한 뒤 필터 검색
             - **sortBy=MATCH_SCORE**: 매칭 점수순 정렬 (userId 필수)
             - 만료된 공고(offer_end_dt < 오늘)는 필터 검색 시 자동 제외됩니다.
+            
+            ### 페이지네이션
+            - **page + size 모두 전달**: `Page` 객체로 페이징 응답 (totalElements, totalPages 등 포함)
+            - **page 또는 size 미전달**: 조건에 맞는 전체 공고를 `List`로 한 번에 반환
         """,
         responses = [
-            ApiResponse(responseCode = "200", description = "검색 성공"),
+            ApiResponse(responseCode = "200", description = "검색 성공 — page/size 전달 시 Page 객체, 미전달 시 List 반환"),
             ApiResponse(responseCode = "400", description = "잘못된 요청 파라미터", content = [Content()])
         ]
     )
@@ -68,10 +70,14 @@ class JobSearchController(private val jobSearchService: JobSearchService) {
         @Parameter(description = "정렬 기준 — RECENT: 최신순, SALARY_HIGH: 급여높은순, MATCH_SCORE: 매칭점수순(userId 필수)")
         @RequestParam(required = false, defaultValue = "RECENT") sortBy: SortType,
 
-        @ParameterObject
-        @PageableDefault(size = 20) pageable: Pageable
-    ): Page<JobPostResponse> {
+        @Parameter(description = "페이지 번호 (0부터 시작). size와 함께 전달해야 페이징 동작. 미전달 시 전체 조회", example = "0")
+        @RequestParam(required = false) page: Int?,
+
+        @Parameter(description = "페이지당 항목 수. page와 함께 전달해야 페이징 동작. 미전달 시 전체 조회", example = "20")
+        @RequestParam(required = false) size: Int?
+    ): Any {
         val filter = buildFilter(userId, empTypes, salaryTypes, minSalary, maxSalary, region, keyword, sortBy)
+        val pageable = if (page != null && size != null) PageRequest.of(page, size) else null
         return jobSearchService.search(filter, pageable)
     }
 
@@ -87,9 +93,14 @@ class JobSearchController(private val jobSearchService: JobSearchService) {
             - **선호도 일치 (최대 10점)**: 지역 일치 4점 + 급여유형 일치 3점 + 고용형태 일치 3점
             
             > 대표이력서 미등록 시 학력/경력 점수는 기본 만점(각 15점)으로 산정됩니다. 응답의 `resumeReflected`가 `false`이면 기본값 적용 상태입니다.
+            
+            ### 페이지네이션 (기본 20개)
+            - **page**: 페이지 번호 (0부터 시작, 기본값 0)
+            - **size**: 페이지당 항목 수 (기본값 20)
+            - 응답에 totalElements, totalPages, number 등 페이징 메타 정보 포함
         """,
         responses = [
-            ApiResponse(responseCode = "200", description = "매칭 검색 성공"),
+            ApiResponse(responseCode = "200", description = "매칭 검색 성공 — Page 객체 (totalElements, totalPages 등 포함)"),
             ApiResponse(responseCode = "400", description = "userId 누락 또는 잘못된 파라미터", content = [Content()])
         ]
     )
@@ -116,11 +127,14 @@ class JobSearchController(private val jobSearchService: JobSearchService) {
         @Parameter(description = "채용공고명 키워드 (대소문자 무시)")
         @RequestParam(required = false) keyword: String?,
 
-        @ParameterObject
-        @PageableDefault(size = 20) pageable: Pageable
+        @Parameter(description = "페이지 번호 (0부터 시작, 기본값 0)", example = "0")
+        @RequestParam(required = false, defaultValue = "0") page: Int,
+
+        @Parameter(description = "페이지당 항목 수 (기본값 20)", example = "20")
+        @RequestParam(required = false, defaultValue = "20") size: Int
     ): Page<JobMatchResult> {
         val filter = buildFilter(userId, empTypes, salaryTypes, minSalary, maxSalary, region, keyword, SortType.MATCH_SCORE)
-        return jobSearchService.searchWithScore(filter, pageable)
+        return jobSearchService.searchWithScore(filter, PageRequest.of(page, size))
     }
 
     private fun buildFilter(
