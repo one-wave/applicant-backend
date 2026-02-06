@@ -1,6 +1,6 @@
 package me.bfapplicant.feature.voiceResume.service
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import me.bfapplicant.feature.resume.dto.ResumeRequest
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
