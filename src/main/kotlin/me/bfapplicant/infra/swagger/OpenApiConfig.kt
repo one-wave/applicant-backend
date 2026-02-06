@@ -3,8 +3,13 @@ package me.bfapplicant.infra.swagger
 import io.swagger.v3.oas.models.Components
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.info.Info
+import io.swagger.v3.oas.models.media.ArraySchema
+import io.swagger.v3.oas.models.media.BooleanSchema
+import io.swagger.v3.oas.models.media.IntegerSchema
+import io.swagger.v3.oas.models.media.Schema
 import io.swagger.v3.oas.models.security.SecurityRequirement
 import io.swagger.v3.oas.models.security.SecurityScheme
+import org.springdoc.core.customizers.OpenApiCustomizer
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
@@ -50,4 +55,38 @@ class OpenApiConfig {
             )
         )
         .addSecurityItem(SecurityRequirement().addList("bearer-jwt"))
+
+    @Bean
+    fun jobPostSearchSchemaCustomizer(): OpenApiCustomizer = OpenApiCustomizer { openApi ->
+        fun ref(path: String) = Schema<Any>().apply { `$ref` = path }
+        val jobPostRef = "#/components/schemas/JobPostResponse"
+
+        openApi.components.addSchemas(
+            "PageJobPostResponse",
+            Schema<Any>().apply {
+                description = "페이징된 채용공고 응답 (page + size 전달 시)"
+                addProperty("content", ArraySchema().items(ref(jobPostRef)))
+                addProperty("totalElements", IntegerSchema().format("int64"))
+                addProperty("totalPages", IntegerSchema().format("int32"))
+                addProperty("size", IntegerSchema().format("int32"))
+                addProperty("number", IntegerSchema().format("int32"))
+                addProperty("numberOfElements", IntegerSchema().format("int32"))
+                addProperty("first", BooleanSchema())
+                addProperty("last", BooleanSchema())
+                addProperty("empty", BooleanSchema())
+                addProperty("pageable", ref("#/components/schemas/PageableObject"))
+                addProperty("sort", ref("#/components/schemas/SortObject"))
+            }
+        )
+
+        openApi.paths["/api/job-posts"]?.get?.responses?.get("200")
+            ?.content?.get("application/json")?.schema = Schema<Any>().apply {
+            oneOf = listOf(
+                ref("#/components/schemas/PageJobPostResponse"),
+                ArraySchema().items(ref(jobPostRef)).apply {
+                    description = "전체 리스트 응답 (page/size 미전달 시)"
+                }
+            )
+        }
+    }
 }
