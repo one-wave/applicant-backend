@@ -67,9 +67,9 @@ class JobSearchService(
         val careerMonths = resolveCareerMonths(resume)
 
         if (filter.sortBy == SortType.MATCH_SCORE) {
-            val all = jobPostQueryRepository.searchAll(filter, envExcludes, educExcludes, careerMonths)
-                .map { it to matchScoreCalculator.calculate(it, userInfo, resume, filter).total }
-                .sortedByDescending { it.second }
+            val posts = jobPostQueryRepository.searchAll(filter, envExcludes, educExcludes, careerMonths)
+            val all = matchScoreCalculator.calculateBatch(posts, userInfo, resume, filter)
+                .sortedByDescending { it.second.total }
                 .map { JobPostResponse.from(it.first) }
             val start = pageable.offset.toInt().coerceAtMost(all.size)
             val end = (start + pageable.pageSize).coerceAtMost(all.size)
@@ -94,11 +94,8 @@ class JobSearchService(
             Pageable.unpaged()
         ).content
 
-        val scored = allMatching
-            .map { post ->
-                val details = matchScoreCalculator.calculate(post, userInfo, resume, filter)
-                JobMatchResult(JobPostResponse.from(post), details.total, details)
-            }
+        val scored = matchScoreCalculator.calculateBatch(allMatching, userInfo, resume, filter)
+            .map { (post, details) -> JobMatchResult(JobPostResponse.from(post), details.total, details) }
             .sortedByDescending { it.score }
 
         val start = pageable.offset.toInt().coerceAtMost(scored.size)
@@ -113,11 +110,12 @@ class JobSearchService(
         careerMonths: Int?,
         userInfo: ApplicantUserInfo?,
         resume: ApplicantUserResume?
-    ): List<JobPostResponse> =
-        jobPostQueryRepository.searchAll(filter, envExcludes, educExcludes, careerMonths)
-            .map { it to matchScoreCalculator.calculate(it, userInfo, resume, filter).total }
-            .sortedByDescending { it.second }
+    ): List<JobPostResponse> {
+        val posts = jobPostQueryRepository.searchAll(filter, envExcludes, educExcludes, careerMonths)
+        return matchScoreCalculator.calculateBatch(posts, userInfo, resume, filter)
+            .sortedByDescending { it.second.total }
             .map { JobPostResponse.from(it.first) }
+    }
 
     private fun resolveUserInfo(filter: JobSearchFilter): ApplicantUserInfo? =
         filter.userId?.let { applicantUserInfoRepository.findByUserUserId(it) }
