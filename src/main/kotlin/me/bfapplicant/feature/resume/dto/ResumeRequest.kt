@@ -40,7 +40,10 @@ data class EducationEntry(
     @Schema(description = "전공", example = "컴퓨터공학", nullable = true)
     val major: String? = null,
 
-    @Schema(description = "학위", example = "BACHELOR")
+    @Schema(
+        description = "학위 — UNDER_HIGH_SCHOOL: 중졸이하 / HIGH_SCHOOL: 고졸 / ASSOCIATE: 초대졸 / BACHELOR: 대졸 / MASTER: 석사 / DOCTOR: 박사",
+        example = "BACHELOR"
+    )
     val degree: EducLevel,
 
     @Schema(description = "입학일", example = "2020-03-01", nullable = true)
@@ -49,7 +52,10 @@ data class EducationEntry(
     @Schema(description = "졸업일", example = "2024-02-28", nullable = true)
     val graduationDate: LocalDate? = null,
 
-    @Schema(description = "졸업 상태", example = "GRADUATED")
+    @Schema(
+        description = "졸업 상태 — GRADUATED: 졸업 / ENROLLED: 재학중 / ON_LEAVE: 휴학 / DROPPED_OUT: 중퇴 / EXPECTED: 졸업예정",
+        example = "GRADUATED"
+    )
     val graduationStatus: GraduationStatus
 )
 
