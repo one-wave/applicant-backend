@@ -1,6 +1,7 @@
 package me.bfapplicant.feature.jobSearch.service
 
 import me.bfapplicant.domain.entity.ApplicantUserInfo
+import me.bfapplicant.domain.entity.ApplicantUserResume
 import me.bfapplicant.domain.entity.JobPost
 import me.bfapplicant.domain.enums.*
 import me.bfapplicant.feature.jobSearch.dto.JobSearchFilter
@@ -10,13 +11,24 @@ import org.springframework.stereotype.Component
 @Component
 class MatchScoreCalculator {
 
-    fun calculate(post: JobPost, userInfo: ApplicantUserInfo?, filter: JobSearchFilter): MatchDetails {
-        val envScore = calculateEnvScore(post, userInfo)
-        val educScore = calculateEducScore(post, userInfo)
-        val careerScore = calculateCareerScore(post, userInfo)
-        val preferenceScore = calculatePreferenceScore(post, filter)
-        return MatchDetails(envScore, educScore, careerScore, preferenceScore)
+    fun calculate(
+        post: JobPost,
+        userInfo: ApplicantUserInfo?,
+        resume: ApplicantUserResume?,
+        filter: JobSearchFilter
+    ): MatchDetails {
+        val resumeReflected = hasResumeData(resume)
+        return MatchDetails(
+            envScore = calculateEnvScore(post, userInfo),
+            educScore = calculateEducScore(post, resume, resumeReflected),
+            careerScore = calculateCareerScore(post, resume, resumeReflected),
+            preferenceScore = calculatePreferenceScore(post, filter),
+            resumeReflected = resumeReflected
+        )
     }
+
+    private fun hasResumeData(resume: ApplicantUserResume?): Boolean =
+        resume != null && (resume.educations.isNotEmpty() || resume.careers.isNotEmpty())
 
     private fun calculateEnvScore(post: JobPost, userInfo: ApplicantUserInfo?): Int {
         if (userInfo == null) return MatchDetails.ENV_MAX
@@ -38,20 +50,23 @@ class MatchScoreCalculator {
         else -> 0
     }
 
-    private fun calculateEducScore(post: JobPost, userInfo: ApplicantUserInfo?): Int {
-        if (userInfo == null) return MatchDetails.EDUC_MAX
+    private fun calculateEducScore(post: JobPost, resume: ApplicantUserResume?, reflected: Boolean): Int {
         val jobReq = ReqEduc.fromLabel(post.reqEduc)
         if (jobReq.level == 0) return MatchDetails.EDUC_MAX
-        // TODO: compare with user's education when field is available
-        return MatchDetails.EDUC_MAX
+        if (!reflected) return MatchDetails.EDUC_MAX
+
+        val userMaxLevel = resume!!.educations
+            .maxOfOrNull { EducLevel.fromLabel(it.degree).level } ?: 0
+        return if (userMaxLevel >= jobReq.level) MatchDetails.EDUC_MAX else 0
     }
 
-    private fun calculateCareerScore(post: JobPost, userInfo: ApplicantUserInfo?): Int {
-        if (userInfo == null) return MatchDetails.CAREER_MAX
+    private fun calculateCareerScore(post: JobPost, resume: ApplicantUserResume?, reflected: Boolean): Int {
         val reqMonths = CareerParser.toMonths(post.reqCareer)
         if (reqMonths == 0) return MatchDetails.CAREER_MAX
-        // TODO: compare with user's career months when field is available
-        return MatchDetails.CAREER_MAX
+        if (!reflected) return MatchDetails.CAREER_MAX
+
+        val userMonths = resume!!.careers.sumOf { it.toMonths() }
+        return if (userMonths >= reqMonths) MatchDetails.CAREER_MAX else 0
     }
 
     private fun calculatePreferenceScore(post: JobPost, filter: JobSearchFilter): Int {

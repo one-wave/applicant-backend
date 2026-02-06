@@ -9,6 +9,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
+import java.time.LocalDate
 import java.util.UUID
 
 @Entity
@@ -25,6 +26,9 @@ class ApplicantUserInfo(
 
     @Column(name = "user_phone")
     val userPhone: String? = null,
+
+    @Column(name = "birth_date")
+    val birthDate: LocalDate? = null,
 
     @Column(name = "env_both_hands", nullable = false)
     val envBothHands: String,

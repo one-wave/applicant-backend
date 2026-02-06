@@ -45,7 +45,13 @@ data class MatchDetails(
         description = "선호도 일치 점수 (0~10). 지역 일치 4점 + 급여유형 일치 3점 + 고용형태 일치 3점",
         minimum = "0", maximum = "10", example = "4"
     )
-    val preferenceScore: Int
+    val preferenceScore: Int,
+
+    @Schema(
+        description = "대표이력서 반영 여부. false이면 학력/경력 점수는 기본 만점이며, 대표이력서 등록 후 실제 산정됩니다.",
+        example = "true"
+    )
+    val resumeReflected: Boolean
 ) {
     @get:Schema(description = "총 매칭 점수 (envScore + educScore + careerScore + preferenceScore)", minimum = "0", maximum = "100")
     val total get() = envScore + educScore + careerScore + preferenceScore

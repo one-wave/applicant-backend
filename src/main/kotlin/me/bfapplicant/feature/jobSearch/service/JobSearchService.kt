@@ -1,8 +1,10 @@
 package me.bfapplicant.feature.jobSearch.service
 
 import me.bfapplicant.domain.entity.ApplicantUserInfo
+import me.bfapplicant.domain.entity.ApplicantUserResume
 import me.bfapplicant.domain.enums.*
 import me.bfapplicant.domain.repository.ApplicantUserInfoRepository
+import me.bfapplicant.domain.repository.ApplicantUserResumeRepository
 import me.bfapplicant.domain.repository.EnvExcludes
 import me.bfapplicant.domain.repository.JobPostQueryRepository
 import me.bfapplicant.domain.repository.JobPostRepository
@@ -19,22 +21,24 @@ class JobSearchService(
     private val jobPostQueryRepository: JobPostQueryRepository,
     private val jobPostRepository: JobPostRepository,
     private val applicantUserInfoRepository: ApplicantUserInfoRepository,
+    private val resumeRepository: ApplicantUserResumeRepository,
     private val matchScoreCalculator: MatchScoreCalculator
 ) {
 
     fun search(filter: JobSearchFilter, pageable: Pageable): Page<JobPostResponse> {
         val userInfo = resolveUserInfo(filter)
+        val resume = resolveRepresentativeResume(filter)
 
         if (userInfo == null && hasNoFilter(filter)) {
             return jobPostRepository.findAllBy(pageable).map(JobPostResponse::from)
         }
 
         val envExcludes = buildEnvExcludes(userInfo)
-        val educExcludes = buildEducExcludes(userInfo)
-        val careerMonths = userInfo?.let { parseCareerMonths(it) }
+        val educExcludes = buildEducExcludes(resume)
+        val careerMonths = resolveCareerMonths(resume)
 
         if (filter.sortBy == SortType.MATCH_SCORE) {
-            return searchWithMatchScore(filter, envExcludes, educExcludes, careerMonths, userInfo, pageable)
+            return searchWithMatchScore(filter, envExcludes, educExcludes, careerMonths, userInfo, resume, pageable)
         }
 
         return jobPostQueryRepository
@@ -44,9 +48,10 @@ class JobSearchService(
 
     fun searchWithScore(filter: JobSearchFilter, pageable: Pageable): Page<JobMatchResult> {
         val userInfo = resolveUserInfo(filter)
+        val resume = resolveRepresentativeResume(filter)
         val envExcludes = buildEnvExcludes(userInfo)
-        val educExcludes = buildEducExcludes(userInfo)
-        val careerMonths = userInfo?.let { parseCareerMonths(it) }
+        val educExcludes = buildEducExcludes(resume)
+        val careerMonths = resolveCareerMonths(resume)
 
         val allMatching = jobPostQueryRepository.search(
             filter.copy(sortBy = SortType.RECENT),
@@ -56,7 +61,7 @@ class JobSearchService(
 
         val scored = allMatching
             .map { post ->
-                val details = matchScoreCalculator.calculate(post, userInfo, filter)
+                val details = matchScoreCalculator.calculate(post, userInfo, resume, filter)
                 JobMatchResult(JobPostResponse.from(post), details.total, details)
             }
             .sortedByDescending { it.score }
@@ -72,6 +77,7 @@ class JobSearchService(
         educExcludes: List<String>?,
         careerMonths: Int?,
         userInfo: ApplicantUserInfo?,
+        resume: ApplicantUserResume?,
         pageable: Pageable
     ): Page<JobPostResponse> {
         val allMatching = jobPostQueryRepository.search(
@@ -79,7 +85,7 @@ class JobSearchService(
         ).content
 
         val sorted = allMatching
-            .map { it to matchScoreCalculator.calculate(it, userInfo, filter).total }
+            .map { it to matchScoreCalculator.calculate(it, userInfo, resume, filter).total }
             .sortedByDescending { it.second }
             .map { JobPostResponse.from(it.first) }
 
@@ -90,6 +96,9 @@ class JobSearchService(
 
     private fun resolveUserInfo(filter: JobSearchFilter): ApplicantUserInfo? =
         filter.userId?.let { applicantUserInfoRepository.findByUserUserId(it) }
+
+    private fun resolveRepresentativeResume(filter: JobSearchFilter): ApplicantUserResume? =
+        filter.userId?.let { resumeRepository.findByUserUserIdAndIsRepresentativeTrue(it) }
 
     private fun hasNoFilter(filter: JobSearchFilter): Boolean =
         filter.empTypes == null
@@ -122,14 +131,20 @@ class JobSearchService(
             .ifEmpty { null }
     }
 
-    private fun buildEducExcludes(userInfo: ApplicantUserInfo?): List<String>? {
-        if (userInfo == null) return null
-        // TODO: compare with user's education when field is available on ApplicantUserInfo
-        return null
+    private fun buildEducExcludes(resume: ApplicantUserResume?): List<String>? {
+        if (resume == null || resume.educations.isEmpty()) return null
+
+        val userMaxLevel = resume.educations
+            .maxOfOrNull { EducLevel.fromLabel(it.degree).level } ?: return null
+
+        return ReqEduc.entries
+            .filter { it.level > userMaxLevel && it.level > 0 }
+            .map { it.label }
+            .ifEmpty { null }
     }
 
-    private fun parseCareerMonths(userInfo: ApplicantUserInfo): Int? {
-        // TODO: compare with user's career when field is available on ApplicantUserInfo
-        return null
+    private fun resolveCareerMonths(resume: ApplicantUserResume?): Int? {
+        if (resume == null || resume.careers.isEmpty()) return null
+        return resume.careers.sumOf { it.toMonths() }
     }
 }
