@@ -8,8 +8,6 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.invoke
 import org.springframework.security.config.http.SessionCreationPolicy
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
-import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.web.cors.CorsConfiguration
@@ -21,15 +19,13 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 class SecurityConfig(private val jwtAuthenticationFilter: JwtAuthenticationFilter) {
 
     @Bean
-    fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
-
-    @Bean
     fun corsConfigurationSource(): CorsConfigurationSource =
         UrlBasedCorsConfigurationSource().apply {
             registerCorsConfiguration("/**", CorsConfiguration().apply {
                 allowedOriginPatterns = listOf("*")
                 allowedMethods = listOf("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 allowedHeaders = listOf("*")
+                exposedHeaders = listOf("X-New-Access-Token", "X-New-Refresh-Token")
                 allowCredentials = true
                 maxAge = 3600L
             })
@@ -45,6 +41,7 @@ class SecurityConfig(private val jwtAuthenticationFilter: JwtAuthenticationFilte
                 authorize("/swagger-ui/**", permitAll)
                 authorize("/v3/api-docs/**", permitAll)
                 authorize("/api/auth/**", permitAll)
+                authorize("/api/job-posts", permitAll)
                 authorize("/api/**", authenticated)
                 authorize(anyRequest, permitAll)
             }

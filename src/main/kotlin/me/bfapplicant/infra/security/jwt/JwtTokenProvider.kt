@@ -1,6 +1,7 @@
 package me.bfapplicant.infra.security.jwt
 
 import io.jsonwebtoken.Claims
+import io.jsonwebtoken.ExpiredJwtException
 import io.jsonwebtoken.Jwts
 import org.springframework.stereotype.Component
 import java.util.Date
@@ -17,6 +18,15 @@ class JwtTokenProvider(private val props: JwtProperties) {
 
     fun validateToken(token: String): Boolean = try {
         parseClaims(token)
+        true
+    } catch (_: Exception) {
+        false
+    }
+
+    fun isTokenExpired(token: String): Boolean = try {
+        parseClaims(token)
+        false
+    } catch (_: ExpiredJwtException) {
         true
     } catch (_: Exception) {
         false
