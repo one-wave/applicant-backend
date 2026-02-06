@@ -34,12 +34,12 @@ class MatchScoreCalculator {
         if (userInfo == null) return MatchDetails.ENV_MAX
 
         var score = 0
-        score += fieldScore(EnvBothHands.fromLabel(userInfo.envBothHands), EnvBothHands.fromLabel(post.envBothHands))
-        score += fieldScore(EnvEyeSight.fromLabel(userInfo.envEyeSight), EnvEyeSight.fromLabel(post.envEyeSight))
-        score += fieldScore(EnvHandWork.fromLabel(userInfo.envHandWork), EnvHandWork.fromLabel(post.envHandWork))
-        score += fieldScore(EnvLiftPower.fromLabel(userInfo.envLiftPower), EnvLiftPower.fromLabel(post.envLiftPower))
-        score += fieldScore(EnvLstnTalk.fromLabel(userInfo.envLstnTalk), EnvLstnTalk.fromLabel(post.envLstnTalk))
-        score += fieldScore(EnvStndWalk.fromLabel(userInfo.envStndWalk), EnvStndWalk.fromLabel(post.envStndWalk))
+        score += fieldScore(userInfo.envBothHands, EnvBothHands.fromLabel(post.envBothHands))
+        score += fieldScore(userInfo.envEyeSight, EnvEyeSight.fromLabel(post.envEyeSight))
+        score += fieldScore(userInfo.envHandWork, EnvHandWork.fromLabel(post.envHandWork))
+        score += fieldScore(userInfo.envLiftPower, EnvLiftPower.fromLabel(post.envLiftPower))
+        score += fieldScore(userInfo.envLstnTalk, EnvLstnTalk.fromLabel(post.envLstnTalk))
+        score += fieldScore(userInfo.envStndWalk, EnvStndWalk.fromLabel(post.envStndWalk))
         return score
     }
 
@@ -56,7 +56,7 @@ class MatchScoreCalculator {
         if (!reflected) return MatchDetails.EDUC_MAX
 
         val userMaxLevel = resume!!.educations
-            .maxOfOrNull { EducLevel.fromLabel(it.degree).level } ?: 0
+            .maxOfOrNull { it.degree.level } ?: 0
         return if (userMaxLevel >= jobReq.level) MatchDetails.EDUC_MAX else 0
     }
 

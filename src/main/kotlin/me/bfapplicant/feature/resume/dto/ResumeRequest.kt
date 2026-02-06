@@ -2,6 +2,8 @@ package me.bfapplicant.feature.resume.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
+import me.bfapplicant.domain.enums.EducLevel
+import me.bfapplicant.domain.enums.GraduationStatus
 import java.time.LocalDate
 
 @Schema(description = "이력서 생성/수정 요청")
@@ -31,12 +33,24 @@ data class ResumeRequest(
 
 @Schema(description = "학력 항목")
 data class EducationEntry(
-    @field:NotBlank val schoolName: String,
+    @field:NotBlank
+    @Schema(description = "학교명", example = "서울대학교")
+    val schoolName: String,
+
+    @Schema(description = "전공", example = "컴퓨터공학", nullable = true)
     val major: String? = null,
-    @field:NotBlank val degree: String,
+
+    @Schema(description = "학위", example = "BACHELOR")
+    val degree: EducLevel,
+
+    @Schema(description = "입학일", example = "2020-03-01", nullable = true)
     val enrollmentDate: LocalDate? = null,
+
+    @Schema(description = "졸업일", example = "2024-02-28", nullable = true)
     val graduationDate: LocalDate? = null,
-    @field:NotBlank val graduationStatus: String
+
+    @Schema(description = "졸업 상태", example = "GRADUATED")
+    val graduationStatus: GraduationStatus
 )
 
 @Schema(description = "경력 항목")

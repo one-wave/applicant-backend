@@ -121,9 +121,8 @@ class JobSearchService(
         )
     }
 
-    private inline fun <reified T> getExcludedLabels(userValue: String): List<String>?
+    private inline fun <reified T> getExcludedLabels(capability: EnvCondition): List<String>?
         where T : Enum<T>, T : EnvCondition {
-        val capability = enumValues<T>().find { it.label == userValue } ?: return null
         if (capability.level == 0) return null
         return enumValues<T>()
             .filter { it.level > capability.level }
@@ -135,7 +134,7 @@ class JobSearchService(
         if (resume == null || resume.educations.isEmpty()) return null
 
         val userMaxLevel = resume.educations
-            .maxOfOrNull { EducLevel.fromLabel(it.degree).level } ?: return null
+            .maxOfOrNull { it.degree.level } ?: return null
 
         return ReqEduc.entries
             .filter { it.level > userMaxLevel && it.level > 0 }

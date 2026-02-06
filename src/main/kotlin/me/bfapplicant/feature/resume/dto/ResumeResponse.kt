@@ -7,6 +7,8 @@ import me.bfapplicant.domain.entity.ResumeCareer
 import me.bfapplicant.domain.entity.ResumeCertificate
 import me.bfapplicant.domain.entity.ResumeEducation
 import me.bfapplicant.domain.entity.ResumeLanguage
+import me.bfapplicant.domain.enums.EducLevel
+import me.bfapplicant.domain.enums.GraduationStatus
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -40,15 +42,33 @@ data class ResumeResponse(
     }
 }
 
+@Schema(description = "학력 응답")
 data class EducationResponse(
-    val educationId: UUID, val schoolName: String, val major: String?,
-    val degree: String, val enrollmentDate: LocalDate?, val graduationDate: LocalDate?,
-    val graduationStatus: String
+    val educationId: UUID,
+    val schoolName: String,
+    val major: String?,
+    @Schema(description = "학위", example = "BACHELOR")
+    val degree: EducLevel,
+    @Schema(description = "학위 표시명", example = "대졸")
+    val degreeLabel: String,
+    val enrollmentDate: LocalDate?,
+    val graduationDate: LocalDate?,
+    @Schema(description = "졸업 상태", example = "GRADUATED")
+    val graduationStatus: GraduationStatus,
+    @Schema(description = "졸업 상태 표시명", example = "졸업")
+    val graduationStatusLabel: String
 ) {
     companion object {
         fun from(e: ResumeEducation) = EducationResponse(
-            e.educationId!!, e.schoolName, e.major, e.degree,
-            e.enrollmentDate, e.graduationDate, e.graduationStatus
+            educationId = e.educationId!!,
+            schoolName = e.schoolName,
+            major = e.major,
+            degree = e.degree,
+            degreeLabel = e.degree.label,
+            enrollmentDate = e.enrollmentDate,
+            graduationDate = e.graduationDate,
+            graduationStatus = e.graduationStatus,
+            graduationStatusLabel = e.graduationStatus.label
         )
     }
 }

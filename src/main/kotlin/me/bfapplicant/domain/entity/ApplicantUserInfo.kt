@@ -2,6 +2,8 @@ package me.bfapplicant.domain.entity
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
@@ -9,6 +11,12 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
+import me.bfapplicant.domain.enums.EnvBothHands
+import me.bfapplicant.domain.enums.EnvEyeSight
+import me.bfapplicant.domain.enums.EnvHandWork
+import me.bfapplicant.domain.enums.EnvLiftPower
+import me.bfapplicant.domain.enums.EnvLstnTalk
+import me.bfapplicant.domain.enums.EnvStndWalk
 import java.time.LocalDate
 import java.util.UUID
 
@@ -30,21 +38,27 @@ class ApplicantUserInfo(
     @Column(name = "birth_date")
     var birthDate: LocalDate? = null,
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "env_both_hands", nullable = false)
-    var envBothHands: String,
+    var envBothHands: EnvBothHands,
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "env_eye_sight", nullable = false)
-    var envEyeSight: String,
+    var envEyeSight: EnvEyeSight,
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "env_hand_work", nullable = false)
-    var envHandWork: String,
+    var envHandWork: EnvHandWork,
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "env_lift_power", nullable = false)
-    var envLiftPower: String,
+    var envLiftPower: EnvLiftPower,
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "env_lstn_talk", nullable = false)
-    var envLstnTalk: String,
+    var envLstnTalk: EnvLstnTalk,
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "env_stnd_walk", nullable = false)
-    var envStndWalk: String
+    var envStndWalk: EnvStndWalk
 )
