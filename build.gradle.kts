@@ -31,6 +31,8 @@ dependencies {
     implementation("tools.jackson.module:jackson-module-kotlin")
     runtimeOnly("org.postgresql:postgresql")
 
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1")
+
     implementation("com.querydsl:querydsl-jpa:5.1.0:jakarta")
     kapt("com.querydsl:querydsl-apt:5.1.0:jakarta")
     kapt("jakarta.persistence:jakarta.persistence-api")
