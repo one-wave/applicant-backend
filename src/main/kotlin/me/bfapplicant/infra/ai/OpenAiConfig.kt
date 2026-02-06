@@ -1,4 +1,4 @@
-package me.bfapplicant.feature.voiceResume.config
+package me.bfapplicant.infra.ai
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean

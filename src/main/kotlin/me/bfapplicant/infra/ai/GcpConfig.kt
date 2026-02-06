@@ -1,4 +1,4 @@
-package me.bfapplicant.feature.voiceResume.config
+package me.bfapplicant.infra.ai
 
 import com.google.api.gax.core.FixedCredentialsProvider
 import com.google.auth.oauth2.GoogleCredentials
