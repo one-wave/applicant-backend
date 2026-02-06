@@ -9,17 +9,19 @@ import com.google.cloud.storage.StorageOptions
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.core.io.Resource
+import java.io.ByteArrayInputStream
 
 @Configuration
 class GcpConfig(
-    @Value("\${gcp.credentials.path}") private val credentialsResource: Resource,
     @Value("\${gcp.project-id}") private val projectId: String
 ) {
 
     @Bean
-    fun gcpCredentials(): GoogleCredentials =
-        credentialsResource.inputStream.use { GoogleCredentials.fromStream(it) }
+    fun gcpCredentials(): GoogleCredentials {
+        val json = System.getenv("GCP_SA_KEY_JSON")
+            ?: error("Missing env: GCP_SA_KEY_JSON")
+        return GoogleCredentials.fromStream(ByteArrayInputStream(json.toByteArray()))
+    }
 
     @Bean
     fun speechClient(credentials: GoogleCredentials): SpeechClient {

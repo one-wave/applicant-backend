@@ -41,3 +41,8 @@ out/
 
 ### OS ###
 .DS_Store
+
+### Secrets ###
+.env
+*.json
+!package.json

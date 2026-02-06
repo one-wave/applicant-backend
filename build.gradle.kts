@@ -66,6 +66,38 @@ allOpen {
     annotation("jakarta.persistence.Embeddable")
 }
 
+tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
+    val envFile = rootProject.file(".env")
+    if (envFile.exists()) {
+        val env = mutableMapOf<String, String>()
+        var key: String? = null
+        val buf = StringBuilder()
+
+        for (line in envFile.readLines()) {
+            if (key != null) {
+                buf.appendLine(line)
+                if (line.trim() == "}") {
+                    env[key] = buf.toString().trim()
+                    key = null
+                    buf.clear()
+                }
+            } else if (line.contains("=") && !line.startsWith("#")) {
+                val idx = line.indexOf("=")
+                val k = line.substring(0, idx).trim()
+                val v = line.substring(idx + 1).trim()
+                if (v.startsWith("{")) {
+                    key = k
+                    buf.clear()
+                    buf.appendLine(v)
+                } else {
+                    env[k] = v
+                }
+            }
+        }
+        env.forEach { (k, v) -> environment(k, v) }
+    }
+}
+
 tasks.withType<Test> {
     useJUnitPlatform()
 }

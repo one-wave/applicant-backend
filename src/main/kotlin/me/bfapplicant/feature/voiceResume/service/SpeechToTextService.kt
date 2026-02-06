@@ -10,6 +10,7 @@ import com.google.cloud.speech.v2.SpeechClient
 import com.google.cloud.storage.BlobId
 import com.google.cloud.storage.BlobInfo
 import com.google.cloud.storage.Storage
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.UUID
@@ -22,10 +23,13 @@ class SpeechToTextService(
     @Value("\${gcp.project-id}") private val projectId: String,
     @Value("\${gcp.storage.bucket}") private val bucket: String
 ) {
+    private val log = LoggerFactory.getLogger(javaClass)
 
     fun transcribe(audioBytes: ByteArray): String {
         val blobName = "temp/${UUID.randomUUID()}.webm"
         val blobId = BlobId.of(bucket, blobName)
+
+        log.info("STT start — audio size: {} bytes, gcs: gs://{}/{}", audioBytes.size, bucket, blobName)
 
         try {
             storage.create(BlobInfo.newBuilder(blobId).build(), audioBytes)
@@ -35,6 +39,7 @@ class SpeechToTextService(
                 .setConfig(
                     RecognitionConfig.newBuilder()
                         .setAutoDecodingConfig(AutoDetectDecodingConfig.newBuilder().build())
+                        .setModel("latest_long")
                         .addLanguageCodes("ko-KR")
                         .build()
                 )
@@ -53,11 +58,15 @@ class SpeechToTextService(
             val response = speechClient.batchRecognizeAsync(request)
                 .get(5, TimeUnit.MINUTES)
 
-            return response.resultsMap.values
-                .firstOrNull()
-                ?.inlineResult
-                ?.transcript
-                ?.resultsList
+            log.info("STT response — resultsMap keys: {}", response.resultsMap.keys)
+
+            val fileResult = response.resultsMap.values.firstOrNull()
+            log.info("STT fileResult — has inlineResult: {}", fileResult?.hasInlineResult())
+
+            val results = fileResult?.inlineResult?.transcript?.resultsList
+            log.info("STT results count: {}, content: {}", results?.size, results)
+
+            return results
                 ?.mapNotNull { it.alternativesList.firstOrNull() }
                 ?.joinToString(" ") { it.transcript }
                 ?.trim()
